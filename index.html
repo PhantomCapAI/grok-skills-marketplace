@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge ⚡ Grok & Claude Skills</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .skill-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .skill-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10">
+      <div>
+        <h1 class="text-5xl font-bold flex items-center gap-3">
+          ⚡ <span class="bg-gradient-to-r from-violet-400 to-fuchsia-500 bg-clip-text text-transparent">SkillForge</span>
+        </h1>
+        <p class="text-xl text-zinc-400 mt-2">Grok & Claude Skills Marketplace</p>
+        <p class="text-sm text-zinc-500">by <a href="https://x.com/PhantomCap_ai" target="_blank" class="hover:text-white">@PhantomCap_ai</a></p>
+      </div>
+      <button onclick="showUploadModal()" 
+              class="bg-white text-black px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 hover:bg-zinc-200 transition">
+        <i class="fa-solid fa-upload"></i> Upload Your Skill
+      </button>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="flex flex-col md:flex-row gap-4 mb-8">
+      <div class="flex-1 relative">
+        <input id="searchInput" 
+               type="text" 
+               placeholder="Search skills..." 
+               onkeyup="filterSkills()"
+               class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4 text-lg focus:outline-none focus:border-violet-500">
+      </div>
+      <div class="flex gap-3">
+        <select id="categoryFilter" onchange="filterSkills()" class="bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4">
+          <option value="">All Categories</option>
+          <option value="finance">Finance</option>
+          <option value="research">Research</option>
+          <option value="coding">Coding</option>
+          <option value="social">Social</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Skills Grid -->
+    <div id="skillsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Skill Preview Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+    <div class="bg-zinc-900 rounded-3xl max-w-lg w-full mx-4 overflow-hidden">
+      <div class="p-8">
+        <div class="flex justify-between items-start mb-6">
+          <div id="modalIcon" class="text-5xl"></div>
+          <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-2xl">✕</button>
+        </div>
+        <h2 id="modalTitle" class="text-3xl font-bold mb-2"></h2>
+        <p id="modalAuthor" class="text-zinc-400"></p>
+        <p id="modalDesc" class="text-zinc-300 mt-6 leading-relaxed"></p>
+        
+        <div class="mt-8 bg-zinc-950 rounded-2xl p-6">
+          <h3 class="font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-download"></i> Install Instructions</h3>
+          <pre id="modalInstall" class="text-sm text-emerald-400 font-mono overflow-auto max-h-48"></pre>
+        </div>
+      </div>
+      <div class="border-t border-zinc-800 p-6 flex gap-3">
+        <button onclick="closeModal()" 
+                class="flex-1 py-4 rounded-2xl border border-zinc-700 hover:bg-zinc-800 transition">Close</button>
+        <button onclick="copyInstall()" 
+                class="flex-1 py-4 bg-violet-600 hover:bg-violet-500 rounded-2xl font-semibold transition">Copy Install Command</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const skills = [
+      {
+        title: "Phantom Finance Analyzer",
+        author: "@PhantomCap_ai",
+        category: "finance",
+        icon: "📊",
+        desc: "Deep financial statement analysis, ratio calculation, valuation models, and investment thesis generation.",
+        install: `mkdir -p ~/.grok/skills/phantom-finance-analyzer\ncd ~/.grok/skills/phantom-finance-analyzer\n# paste skill.md + instructions.md`
+      },
+      {
+        title: "Research Beast",
+        author: "@PhantomCap_ai",
+        category: "research",
+        icon: "🔍",
+        desc: "Multi-source web research, source verification, and structured report generation.",
+        install: `mkdir -p ~/.grok/skills/research-beast\n# Download skill files...`
+      },
+      {
+        title: "Code Architect",
+        author: "Community",
+        category: "coding",
+        icon: "💾",
+        desc: "System design, architecture diagrams, and production-ready code scaffolding.",
+        install: `mkdir -p ~/.grok/skills/code-architect\n# ...`
+      },
+      {
+        title: "Twitter Sentiment Trader",
+        author: "@PhantomCap_ai",
+        category: "social",
+        icon: "🐦",
+        desc: "Real-time sentiment analysis on X posts and trading signal generation.",
+        install: `mkdir -p ~/.grok/skills/twitter-sentiment\n# ...`
+      }
+    ];
+
+    function renderSkills(filteredSkills) {
+      const grid = document.getElementById('skillsGrid');
+      grid.innerHTML = '';
+      
+      filteredSkills.forEach(skill => {
+        const card = document.createElement('div');
+        card.className = `skill-card bg-zinc-900 border border-zinc-800 rounded-3xl p-8 cursor-pointer`;
+        card.innerHTML = `
+          <div class="text-6xl mb-6">${skill.icon}</div>
+          <h3 class="text-2xl font-semibold">${skill.title}</h3>
+          <p class="text-zinc-400 text-sm mt-1">${skill.author}</p>
+          <p class="text-zinc-300 mt-6 line-clamp-3">${skill.desc}</p>
+          <div class="mt-8 flex justify-between items-center">
+            <span class="text-xs uppercase tracking-widest text-zinc-500">${skill.category}</span>
+            <button onclick="showSkill(${skills.indexOf(skill)})" class="text-violet-400 hover:text-violet-300 text-sm font-medium">Preview →</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterSkills() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const category = document.getElementById('categoryFilter').value;
+      
+      const filtered = skills.filter(skill => {
+        const matchesSearch = skill.title.toLowerCase().includes(search) || 
+                             skill.desc.toLowerCase().includes(search);
+        const matchesCategory = !category || skill.category === category;
+        return matchesSearch && matchesCategory;
+      });
+      
+      renderSkills(filtered);
+    }
+
+    let currentSkillIndex = 0;
+    function showSkill(index) {
+      currentSkillIndex = index;
+      const skill = skills[index];
+      
+      document.getElementById('modalTitle').textContent = skill.title;
+      document.getElementById('modalAuthor').textContent = skill.author;
+      document.getElementById('modalDesc').textContent = skill.desc;
+      document.getElementById('modalIcon').textContent = skill.icon;
+      document.getElementById('modalInstall').textContent = skill.install;
+      
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+
+    function copyInstall() {
+      const text = skills[currentSkillIndex].install;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("✅ Install instructions copied!");
+      });
+    }
+
+    function showUploadModal() {
+      alert("Upload flow coming soon! For now, create a folder in ~/.grok/skills/ and share your PR on GitHub.");
+    }
+
+    // Initial render
+    renderSkills(skills);
+  </script>
+</body>
+</html>
