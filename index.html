@@ -12,7 +12,7 @@
     .skill-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
   </style>
 </head>
-<body class="bg-zinc-950 dark:bg-zinc-950 text-zinc-100 min-h-screen">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
   <div class="max-w-7xl mx-auto px-6 py-8">
     <!-- Header -->
     <div class="flex items-center justify-between mb-10">
@@ -25,20 +25,14 @@
       </div>
       
       <div class="flex items-center gap-4">
-        <!-- Theme Toggle -->
-        <button onclick="toggleTheme()" id="themeToggle"
-                class="w-11 h-11 flex items-center justify-center rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition">
+        <button onclick="toggleTheme()" id="themeToggle" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition">
           <i class="fa-solid fa-sun text-xl"></i>
         </button>
-        
-        <!-- Favorites -->
         <button onclick="showFavorites()" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition relative">
           <i class="fa-solid fa-heart text-xl"></i>
           <span id="favCount" class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
         </button>
-
-        <button onclick="showUploadModal()" 
-                class="bg-white text-black px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 hover:bg-zinc-200 transition">
+        <button onclick="showUploadModal()" class="bg-white text-black px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 hover:bg-zinc-200 transition">
           <i class="fa-solid fa-upload"></i> Upload Skill
         </button>
       </div>
@@ -47,14 +41,9 @@
     <!-- Search & Filters -->
     <div class="flex flex-col md:flex-row gap-4 mb-8">
       <div class="flex-1 relative">
-        <input id="searchInput" 
-               type="text" 
-               placeholder="Search skills..." 
-               onkeyup="filterSkills()"
-               class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4 text-lg focus:outline-none focus:border-violet-500">
+        <input id="searchInput" type="text" placeholder="Search skills..." onkeyup="filterSkills()" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4 text-lg focus:outline-none focus:border-violet-500">
       </div>
-      <select id="categoryFilter" onchange="filterSkills()" 
-              class="bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4">
+      <select id="categoryFilter" onchange="filterSkills()" class="bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4">
         <option value="">All Categories</option>
         <option value="finance">Finance</option>
         <option value="research">Research</option>
@@ -66,31 +55,29 @@
     </div>
 
     <!-- Skills Grid -->
-    <div id="skillsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Populated by JS -->
-    </div>
+    <div id="skillsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
   </div>
 
-  <!-- Skill Preview Modal -->
+  <!-- Modal -->
   <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
     <div class="bg-zinc-900 rounded-3xl max-w-lg w-full overflow-hidden">
       <div class="p-8">
         <div class="flex justify-between items-start mb-6">
           <div id="modalIcon" class="text-6xl"></div>
-          <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-3xl leading-none">✕</button>
+          <button onclick="closeModal()" class="text-3xl leading-none text-zinc-400 hover:text-white">✕</button>
         </div>
-        <h2 id="modalTitle" class="text-3xl font-bold mb-2"></h2>
+        <h2 id="modalTitle" class="text-3xl font-bold"></h2>
         <p id="modalAuthor" class="text-violet-400"></p>
-        <p id="modalDesc" class="text-zinc-300 mt-6 leading-relaxed"></p>
+        <p id="modalDesc" class="mt-6 text-zinc-300"></p>
         
         <div class="mt-8 bg-zinc-950 rounded-2xl p-6">
-          <h3 class="font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-download"></i> Install Instructions</h3>
-          <pre id="modalInstall" class="text-sm text-emerald-400 font-mono overflow-auto max-h-48 whitespace-pre-wrap"></pre>
+          <h3 class="font-semibold mb-3">Install Instructions</h3>
+          <pre id="modalInstall" class="text-emerald-400 font-mono text-sm overflow-auto max-h-48"></pre>
         </div>
       </div>
       <div class="border-t border-zinc-800 p-6 flex gap-3">
-        <button onclick="closeModal()" class="flex-1 py-4 rounded-2xl border border-zinc-700 hover:bg-zinc-800">Close</button>
-        <button onclick="copyInstall()" class="flex-1 py-4 bg-violet-600 hover:bg-violet-500 rounded-2xl font-semibold">Copy Install</button>
+        <button onclick="closeModal()" class="flex-1 py-4 border border-zinc-700 rounded-2xl hover:bg-zinc-800">Close</button>
+        <button onclick="copyInstall()" class="flex-1 py-4 bg-violet-600 rounded-2xl font-semibold">Copy Install</button>
       </div>
     </div>
   </div>
@@ -99,7 +86,7 @@
     let favorites = JSON.parse(localStorage.getItem('skillFavorites')) || [];
 
     const skills = [
-      { id: 0, title: "Phantom Finance Analyzer", author: "@PhantomCap_ai", category: "finance", icon: "📊", desc: "Deep financial statement analysis, ratio calculation, valuation models, and investment thesis generation.", install: "mkdir -p ~/.grok/skills/phantom-finance-analyzer\ncd ~/.grok/skills/phantom-finance-analyzer" },
+      { id: 0, title: "Phantom Finance Analyzer", author: "@PhantomCap_ai", category: "finance", icon: "📊", desc: "Deep financial statement analysis, ratio calculation, valuation models, and investment thesis generation.", install: "mkdir -p ~/.grok/skills/phantom-finance-analyzer" },
       { id: 1, title: "Research Beast", author: "@PhantomCap_ai", category: "research", icon: "🔍", desc: "Multi-source web research, source verification, and structured report generation.", install: "mkdir -p ~/.grok/skills/research-beast" },
       { id: 2, title: "Code Architect", author: "Community", category: "coding", icon: "💾", desc: "System design, architecture diagrams, and production-ready code scaffolding.", install: "mkdir -p ~/.grok/skills/code-architect" },
       { id: 3, title: "Twitter Sentiment Trader", author: "@PhantomCap_ai", category: "social", icon: "🐦", desc: "Real-time X sentiment analysis and trading signal generation.", install: "mkdir -p ~/.grok/skills/twitter-sentiment" },
@@ -167,7 +154,6 @@
     function filterSkills() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const category = document.getElementById('categoryFilter').value;
-      
       const filtered = skills.filter(skill => {
         const matchesSearch = skill.title.toLowerCase().includes(search) || skill.desc.toLowerCase().includes(search);
         const matchesCategory = !category || skill.category === category;
@@ -177,28 +163,22 @@
     }
 
     let currentSkillIndex = 0;
-    function showSkill(id) {
-      currentSkillIndex = skills.findIndex(s => s.id === id);
-      const skill = skills[currentSkillIndex];
-      
+    function showSkill(index) {
+      currentSkillIndex = index;
+      const skill = skills[index];
       document.getElementById('modalTitle').textContent = skill.title;
       document.getElementById('modalAuthor').textContent = skill.author;
       document.getElementById('modalDesc').textContent = skill.desc;
       document.getElementById('modalIcon').textContent = skill.icon;
       document.getElementById('modalInstall').textContent = skill.install;
-      
       document.getElementById('modal').classList.remove('hidden');
     }
 
-    function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
-    }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
     function copyInstall() {
       const text = skills[currentSkillIndex].install;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("✅ Copied to clipboard!");
-      });
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
     }
 
     function showUploadModal() {
@@ -207,8 +187,9 @@
 
     function toggleTheme() {
       const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
       const icon = document.getElementById('themeToggle').querySelector('i');
-      if (html.classList.contains('dark')) {
+      if (isDark) {
         html.classList.remove('dark');
         icon.classList.replace('fa-sun', 'fa-moon');
         localStorage.theme = 'light';
@@ -219,15 +200,13 @@
       }
     }
 
-    // Load saved theme
     if (localStorage.theme === 'light') {
       document.documentElement.classList.remove('dark');
       document.getElementById('themeToggle').querySelector('i').classList.replace('fa-sun', 'fa-moon');
     }
 
-    // Initial render
     renderSkills(skills);
     updateFavCount();
   </script>
 </body>
-</html> 
+</html>
