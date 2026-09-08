@@ -3,210 +3,665 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SkillForge ⚡ Grok & Claude Skills</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <meta name="description" content="SkillForge — a fully static, open-source marketplace for Grok & Claude skills. Browse, preview, and install real skills into ~/.grok/skills/. No backend, no accounts, no tracking.">
+  <meta name="theme-color" content="#09090b">
+  <meta property="og:title" content="SkillForge ⚡ Grok & Claude Skills Marketplace">
+  <meta property="og:description" content="Open-source, fully static marketplace for Grok & Claude skills. Zero dependencies, works offline.">
+  <title>SkillForge ⚡ Grok & Claude Skills Marketplace</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <script>
+    try {
+      var saved = localStorage.getItem('skillforge-theme') || localStorage.getItem('theme') || 'dark';
+      if (saved === 'light') { document.documentElement.classList.remove('dark'); document.documentElement.classList.add('light'); }
+    } catch (e) {}
+  </script>
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    .skill-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .skill-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+    :root {
+      color-scheme: dark;
+      --bg-page: #09090b;
+      --bg-panel: #16161a;
+      --bg-inset: #0c0c10;
+      --bg-pill: #24242a;
+      --bg-hover: #24242a;
+      --edge: #26262c;
+      --edge-strong: #3d3d44;
+      --text-strong: #f4f4f5;
+      --text-mid: #d4d4d8;
+      --text-muted: #a8a8b3;
+      --text-faint: #7b7b88;
+      --accent: #a78bfa;
+      --accent-strong: #8b5cf6;
+      --accent-grad-a: #a78bfa;
+      --accent-grad-b: #e879f9;
+      --code: #34d399;
+      --danger: #f87171;
+      --shadow: 0 20px 30px -12px rgb(0 0 0 / 0.5);
+      --overlay: rgb(0 0 0 / 0.72);
+    }
+    html.light {
+      color-scheme: light;
+      --bg-page: #f6f6f7;
+      --bg-panel: #ffffff;
+      --bg-inset: #f1f1f4;
+      --bg-pill: #e5e5ea;
+      --bg-hover: #e5e5ea;
+      --edge: #d9d9df;
+      --edge-strong: #a9a9b4;
+      --text-strong: #17171c;
+      --text-mid: #3f3f47;
+      --text-muted: #5b5b66;
+      --text-faint: #7a7a86;
+      --accent: #6d28d9;
+      --accent-strong: #6d28d9;
+      --accent-grad-a: #6d28d9;
+      --accent-grad-b: #c026d3;
+      --code: #047857;
+      --danger: #dc2626;
+      --shadow: 0 20px 30px -12px rgb(0 0 0 / 0.18);
+      --overlay: rgb(0 0 0 / 0.45);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg-page);
+      color: var(--text-strong);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 72rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    .hidden { display: none !important; }
+    .text-muted { color: var(--text-muted); }
+    .text-faint { color: var(--text-faint); }
+    a { color: var(--accent); }
+    button { font: inherit; cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; border-radius: 4px; }
+    .label-sr {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+    }
+
+    /* Header */
+    .top { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; }
+    h1 { font-size: clamp(1.9rem, 4vw, 3rem); margin: 0; display: flex; align-items: center; gap: 0.6rem; }
+    .brand {
+      background: linear-gradient(90deg, var(--accent-grad-a), var(--accent-grad-b));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .tagline { margin: 0.25rem 0 0; font-size: 1.15rem; }
+    .byline { margin: 0.15rem 0 0; font-size: 0.85rem; }
+    .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .icon-btn {
+      width: 2.75rem; height: 2.75rem; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 0.9rem; background: var(--bg-panel); border: 1px solid var(--edge);
+      color: var(--text-muted); position: relative;
+    }
+    .icon-btn:hover { background: var(--bg-hover); color: var(--text-strong); }
+    .icon-btn svg { width: 1.25rem; height: 1.25rem; }
+    .badge {
+      position: absolute; top: -0.4rem; right: -0.4rem; min-width: 1.2rem; height: 1.2rem; padding: 0 0.3rem;
+      border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.7rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ic-moon { display: none; }
+    html.light .ic-moon { display: inline-flex; }
+    html.light .ic-sun { display: none; }
+    .btn-upload {
+      display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; border-radius: 0.9rem; border: 0;
+      background: var(--text-strong); color: var(--bg-page); font-weight: 600;
+    }
+    .btn-upload:hover { filter: brightness(1.08); }
+    .btn-upload svg { width: 1rem; height: 1rem; }
+
+    /* Controls */
+    .controls { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+    @media (min-width: 640px) { .controls { flex-direction: row; } .search-box { flex: 1; } }
+    .input, .select {
+      width: 100%; background: var(--bg-panel); border: 1px solid var(--edge);
+      color: var(--text-strong); padding: 0.85rem 1.1rem; border-radius: 0.9rem; font-size: 1rem;
+    }
+    .input::placeholder { color: var(--text-faint); }
+    .input:focus { border-color: var(--accent-strong); }
+    .select {
+      appearance: none; -webkit-appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position: calc(100% - 1.2rem) 50%, calc(100% - 0.9rem) 50%;
+      background-size: 0.3rem 0.3rem; background-repeat: no-repeat;
+    }
+    @media (min-width: 640px) { .select { width: 14rem; flex: none; } }
+
+    /* Skills grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1.25rem; }
+    .card {
+      position: relative; display: flex; flex-direction: column; padding: 1.6rem; border-radius: 1.25rem;
+      background: var(--bg-panel); border: 1px solid var(--edge);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--accent); }
+    .fav-btn {
+      position: absolute; top: 0.9rem; right: 0.9rem; width: 2.4rem; height: 2.4rem;
+      display: inline-flex; align-items: center; justify-content: center; border-radius: 0.75rem;
+      background: transparent; border: 0; color: var(--text-faint);
+    }
+    .fav-btn:hover { color: var(--danger); background: var(--bg-hover); }
+    .fav-btn[aria-pressed="true"] { color: var(--danger); }
+    .fav-btn svg { width: 1.1rem; height: 1.1rem; }
+    .fav-btn .hb { display: none; }
+    .fav-btn[aria-pressed="true"] .hb { display: block; }
+    .fav-btn[aria-pressed="true"] .ho { display: none; }
+    .card-icon { font-size: 2.6rem; margin-bottom: 0.9rem; line-height: 1; }
+    .card-title { margin: 0.1rem 0 0.2rem; font-size: 1.25rem; padding-right: 2rem; }
+    .card-author { margin: 0; font-size: 0.85rem; }
+    .card-desc {
+      margin: 1rem 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden; line-height: 1.55; color: var(--text-mid);
+    }
+    .card-foot { margin-top: 1.4rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .pill {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; background: var(--bg-pill);
+      color: var(--text-muted); padding: 0.3rem 0.7rem; border-radius: 999px; white-space: nowrap;
+    }
+    .preview { background: transparent; border: 0; padding: 0; color: var(--accent); font-weight: 600; }
+
+    /* Favorites banner */
+    .viewbanner {
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem; padding: 0.9rem 1.1rem; border-radius: 0.9rem;
+      background: var(--bg-panel); border: 1px solid var(--edge);
+    }
+    .viewbanner .count { font-weight: 700; color: var(--accent); }
+    .btn-outline {
+      padding: 0.6rem 1.1rem; border-radius: 0.9rem; border: 1px solid var(--edge-strong);
+      background: transparent; color: var(--text-strong);
+    }
+    .btn-outline:hover { background: var(--bg-hover); }
+
+    /* Empty state */
+    .empty {
+      border: 1px dashed var(--edge-strong); border-radius: 1.25rem; background: var(--bg-panel);
+      padding: 3rem 1.5rem; text-align: center; margin-top: 0.35rem;
+    }
+    .empty h2 { margin: 0 0 0.5rem; }
+    .empty p { margin: 0 0 1.25rem; }
+
+    /* Modal */
+    .overlay {
+      position: fixed; inset: 0; background: var(--overlay); display: flex; align-items: center;
+      justify-content: center; padding: 1rem; z-index: 50; backdrop-filter: blur(4px);
+    }
+    .modal {
+      width: 100%; max-width: 34rem; max-height: calc(100dvh - 2rem); overflow-y: auto;
+      background: var(--bg-panel); border: 1px solid var(--edge); border-radius: 1.5rem; box-shadow: var(--shadow);
+    }
+    .modal-body { padding: 1.75rem; }
+    .modal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .modal-icon { font-size: 2.8rem; line-height: 1; }
+    .modal-close {
+      flex: none; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; border: 0;
+      background: transparent; color: var(--text-muted); font-size: 1.2rem;
+    }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text-strong); }
+    .modal-title { margin: 0.75rem 0 0.25rem; font-size: 1.6rem; }
+    .modal-author { margin: 0; color: var(--accent); }
+    .modal-desc { margin: 1.25rem 0 0; color: var(--text-mid); }
+    .install-box {
+      margin-top: 1.5rem; background: var(--bg-inset); border: 1px solid var(--edge);
+      border-radius: 1rem; padding: 1.1rem 1.25rem;
+    }
+    .install-box h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
+    pre {
+      margin: 0; color: var(--code); font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.82rem; white-space: pre; overflow-x: auto;
+    }
+    .modal-foot { display: flex; gap: 0.75rem; padding: 1.25rem 1.75rem; border-top: 1px solid var(--edge); }
+    .btn { flex: 1; padding: 0.9rem 1rem; border-radius: 0.9rem; font-weight: 600; }
+    .btn-ghost { border: 1px solid var(--edge-strong); background: transparent; color: var(--text-strong); }
+    .btn-ghost:hover { background: var(--bg-hover); }
+    .btn-primary { border: 0; background: var(--accent-strong); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    footer { margin-top: 3rem; text-align: center; color: var(--text-faint); font-size: 0.85rem; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+      .card:hover { transform: none; box-shadow: none; }
+    }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen">
-  <div class="max-w-7xl mx-auto px-6 py-8">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-10">
+<body>
+  <div class="wrap">
+    <header class="top">
       <div>
-        <h1 class="text-5xl font-bold flex items-center gap-3">
-          ⚡ <span class="bg-gradient-to-r from-violet-400 to-fuchsia-500 bg-clip-text text-transparent">SkillForge</span>
-        </h1>
-        <p class="text-xl text-zinc-400 mt-2">Grok & Claude Skills Marketplace</p>
-        <p class="text-sm text-zinc-500">by <a href="https://x.com/PhantomCap_ai" target="_blank" class="hover:text-white">@PhantomCap_ai</a></p>
+        <h1>⚡ <span class="brand">SkillForge</span></h1>
+        <p class="tagline text-muted">Grok &amp; Claude Skills Marketplace</p>
+        <p class="byline text-faint">Built by <a href="https://x.com/PhantomCap_ai" target="_blank" rel="noopener">@PhantomCap_ai</a></p>
       </div>
-      
-      <div class="flex items-center gap-4">
-        <button onclick="toggleTheme()" id="themeToggle" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition">
-          <i class="fa-solid fa-sun text-xl"></i>
+      <nav class="actions" aria-label="Marketplace actions">
+        <button type="button" id="themeToggle" class="icon-btn" aria-label="Toggle light and dark theme">
+          <span class="ic-sun" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
+          <span class="ic-moon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg></span>
         </button>
-        <button onclick="showFavorites()" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-zinc-900 hover:bg-zinc-800 transition relative">
-          <i class="fa-solid fa-heart text-xl"></i>
-          <span id="favCount" class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+        <button type="button" id="favBtn" class="icon-btn" aria-label="View favorite skills" aria-pressed="false">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
+          <span class="badge" id="favCount" aria-hidden="true">0</span>
         </button>
-        <button onclick="showUploadModal()" class="bg-white text-black px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 hover:bg-zinc-200 transition">
-          <i class="fa-solid fa-upload"></i> Upload Skill
+        <button type="button" class="btn-upload" id="uploadBtn">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <span>Upload Skill</span>
         </button>
+      </nav>
+    </header>
+
+    <section aria-label="Search and filter">
+      <div class="controls">
+        <div class="search-box">
+          <label class="label-sr" for="searchInput">Search skills</label>
+          <input id="searchInput" class="input" type="search" placeholder="Search skills, authors, categories…" autocomplete="off">
+        </div>
+        <div>
+          <label class="label-sr" for="categoryFilter">Filter by category</label>
+          <select id="categoryFilter" class="select"></select>
+        </div>
       </div>
+    </section>
+
+    <div id="viewBanner" class="viewbanner hidden" aria-live="polite">
+      <span>Viewing <strong>Favorites</strong> — <span class="count" id="viewCount"></span></span>
+      <button type="button" id="showAllBtn" class="btn-outline">Browse all skills</button>
     </div>
 
-    <!-- Search & Filters -->
-    <div class="flex flex-col md:flex-row gap-4 mb-8">
-      <div class="flex-1 relative">
-        <input id="searchInput" type="text" placeholder="Search skills..." onkeyup="filterSkills()" class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4 text-lg focus:outline-none focus:border-violet-500">
+    <p id="resultStatus" class="label-sr" aria-live="polite"></p>
+    <section aria-labelledby="gridHeading" aria-label="Skill list">
+      <h2 id="gridHeading" class="label-sr">Available skills</h2>
+      <div id="skillsGrid" class="grid"></div>
+      <noscript><p class="text-muted" style="margin-top:1.5rem">SkillForge requires JavaScript to render the marketplace.</p></noscript>
+      <div id="emptyState" class="empty hidden">
+        <h2 id="emptyTitle">No skills found</h2>
+        <p id="emptyMsg" class="text-muted">Try a different search or category.</p>
+        <button type="button" id="resetFilters" class="btn-outline">Clear search &amp; filters</button>
       </div>
-      <select id="categoryFilter" onchange="filterSkills()" class="bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4">
-        <option value="">All Categories</option>
-        <option value="finance">Finance</option>
-        <option value="research">Research</option>
-        <option value="coding">Coding</option>
-        <option value="social">Social</option>
-        <option value="creative">Creative</option>
-        <option value="productivity">Productivity</option>
-      </select>
-    </div>
+    </section>
 
-    <!-- Skills Grid -->
-    <div id="skillsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <footer>
+      <p id="footerNote" class="text-faint"></p>
+    </footer>
   </div>
 
-  <!-- Modal -->
-  <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-    <div class="bg-zinc-900 rounded-3xl max-w-lg w-full overflow-hidden">
-      <div class="p-8">
-        <div class="flex justify-between items-start mb-6">
-          <div id="modalIcon" class="text-6xl"></div>
-          <button onclick="closeModal()" class="text-3xl leading-none text-zinc-400 hover:text-white">✕</button>
+  <div id="modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+    <div class="modal">
+      <div class="modal-body">
+        <div class="modal-top">
+          <div id="modalIcon" class="modal-icon" aria-hidden="true"></div>
+          <button type="button" id="modalClose" class="modal-close" aria-label="Close skill details">✕</button>
         </div>
-        <h2 id="modalTitle" class="text-3xl font-bold"></h2>
-        <p id="modalAuthor" class="text-violet-400"></p>
-        <p id="modalDesc" class="mt-6 text-zinc-300"></p>
-        
-        <div class="mt-8 bg-zinc-950 rounded-2xl p-6">
-          <h3 class="font-semibold mb-3">Install Instructions</h3>
-          <pre id="modalInstall" class="text-emerald-400 font-mono text-sm overflow-auto max-h-48"></pre>
+        <h2 id="modalTitle" class="modal-title"></h2>
+        <p id="modalAuthor" class="modal-author"></p>
+        <p id="modalDesc" class="modal-desc"></p>
+        <div class="install-box">
+          <h3>Install Instructions</h3>
+          <pre id="modalInstall"></pre>
         </div>
       </div>
-      <div class="border-t border-zinc-800 p-6 flex gap-3">
-        <button onclick="closeModal()" class="flex-1 py-4 border border-zinc-700 rounded-2xl hover:bg-zinc-800">Close</button>
-        <button onclick="copyInstall()" class="flex-1 py-4 bg-violet-600 rounded-2xl font-semibold">Copy Install</button>
+      <div class="modal-foot">
+        <button type="button" id="modalClose2" class="btn btn-ghost">Close</button>
+        <button type="button" id="copyBtn" class="btn btn-primary">Copy Install</button>
       </div>
     </div>
   </div>
 
   <script>
-    let favorites = JSON.parse(localStorage.getItem('skillFavorites')) || [];
+    (function () {
+      'use strict';
 
-    const skills = [
-      { id: 0, title: "Phantom Finance Analyzer", author: "@PhantomCap_ai", category: "finance", icon: "📊", desc: "Deep financial statement analysis, ratio calculation, valuation models, and investment thesis generation.", install: "mkdir -p ~/.grok/skills/phantom-finance-analyzer" },
-      { id: 1, title: "Research Beast", author: "@PhantomCap_ai", category: "research", icon: "🔍", desc: "Multi-source web research, source verification, and structured report generation.", install: "mkdir -p ~/.grok/skills/research-beast" },
-      { id: 2, title: "Code Architect", author: "Community", category: "coding", icon: "💾", desc: "System design, architecture diagrams, and production-ready code scaffolding.", install: "mkdir -p ~/.grok/skills/code-architect" },
-      { id: 3, title: "Twitter Sentiment Trader", author: "@PhantomCap_ai", category: "social", icon: "🐦", desc: "Real-time X sentiment analysis and trading signal generation.", install: "mkdir -p ~/.grok/skills/twitter-sentiment" },
-      { id: 4, title: "Prompt Engineer Pro", author: "@PhantomCap_ai", category: "productivity", icon: "✍️", desc: "Advanced prompt optimization, chain-of-thought templates, and meta-prompting.", install: "mkdir -p ~/.grok/skills/prompt-engineer" },
-      { id: 5, title: "Crypto Whale Tracker", author: "Community", category: "finance", icon: "🐳", desc: "Monitor large wallet movements and on-chain intelligence.", install: "mkdir -p ~/.grok/skills/crypto-whale" },
-      { id: 6, title: "Legal Document Analyzer", author: "@PhantomCap_ai", category: "research", icon: "⚖️", desc: "Contract review, risk identification, and clause explanations.", install: "mkdir -p ~/.grok/skills/legal-analyzer" },
-      { id: 7, title: "YouTube Script Writer", author: "Community", category: "creative", icon: "🎥", desc: "Viral script generation, SEO titles, and thumbnail ideas.", install: "mkdir -p ~/.grok/skills/youtube-writer" },
-      { id: 8, title: "Image Prompt Master", author: "@PhantomCap_ai", category: "creative", icon: "🖼️", desc: "Midjourney / Flux / DALL-E ultra-detailed prompt crafting.", install: "mkdir -p ~/.grok/skills/image-prompt" },
-      { id: 9, title: "News Summarizer", author: "Community", category: "research", icon: "📰", desc: "Multi-source news digestion with bias detection.", install: "mkdir -p ~/.grok/skills/news-summarizer" },
-      { id: 10, title: "Meme Lord Generator", author: "@PhantomCap_ai", category: "creative", icon: "😂", desc: "Create viral memes with current events and humor.", install: "mkdir -p ~/.grok/skills/meme-lord" },
-      { id: 11, title: "Fitness Coach AI", author: "Community", category: "productivity", icon: "🏋️", desc: "Personalized workout plans, nutrition, and progress tracking.", install: "mkdir -p ~/.grok/skills/fitness-coach" }
-    ];
+      /* ------------------------------------------------------------------ */
+      /* Data — single source of truth. Fields reflect the real packs under  */
+      /* /skills/<id>/ (skill.md + instructions.md). No invented entries.    */
+      /* ------------------------------------------------------------------ */
+      var SKILLS = [
+        {
+          id: 'phantom-finance-analyzer',
+          title: 'Phantom Finance Analyzer',
+          author: '@PhantomCap_ai',
+          category: 'finance',
+          icon: '📊',
+          summary: 'Advanced financial analysis assistant for stocks, earnings, balance sheets, cash flow, and valuation, ending in a clear BUY / HOLD / SELL thesis with a confidence score.',
+          install: 'git clone --depth 1 https://github.com/PhantomCapAI/grok-skills-marketplace.git\ncp -r grok-skills-marketplace/skills/phantom-finance-analyzer ~/.grok/skills/'
+        },
+        {
+          id: 'research-beast',
+          title: 'Research Beast',
+          author: '@PhantomCap_ai',
+          category: 'research',
+          icon: '🔍',
+          summary: 'Multi-source deep research agent that gathers, cross-verifies, and synthesizes information from the web into structured reports with citations.',
+          install: 'git clone --depth 1 https://github.com/PhantomCapAI/grok-skills-marketplace.git\ncp -r grok-skills-marketplace/skills/research-beast ~/.grok/skills/'
+        }
+      ];
 
-    function isFavorite(id) { return favorites.includes(id); }
+      var CATEGORY_LABELS = { 'finance': 'Finance', 'research': 'Research' };
 
-    function toggleFavorite(id) {
-      if (favorites.includes(id)) {
-        favorites = favorites.filter(f => f !== id);
+      function categoryLabel(slug) {
+        if (CATEGORY_LABELS[slug]) return CATEGORY_LABELS[slug];
+        return slug.charAt(0).toUpperCase() + slug.slice(1);
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Helpers                                                            */
+      /* ------------------------------------------------------------------ */
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function $el(id) { return document.getElementById(id); }
+
+      function loadFavorites() {
+        try {
+          var raw = JSON.parse(localStorage.getItem('skillFavorites') || '[]');
+          if (!Array.isArray(raw)) return [];
+          return raw.filter(function (id) {
+            return typeof id === 'string' && SKILLS.some(function (s) { return s.id === id; });
+          });
+        } catch (e) { return []; }
+      }
+
+      var favorites = loadFavorites();
+      var state = { q: '', category: '', mode: 'all' }; // mode: 'all' | 'favs'
+      var currentSkillId = null;
+
+      /* ------------------------------------------------------------------ */
+      /* Render                                                             */
+      /* ------------------------------------------------------------------ */
+      function isFavorite(id) { return favorites.indexOf(id) !== -1; }
+
+      function cardHTML(skill) {
+        var fav = isFavorite(skill.id);
+        return '' +
+          '<article class="card" data-id="' + escapeHtml(skill.id) + '">' +
+            '<button type="button" class="fav-btn" data-fav="' + escapeHtml(skill.id) + '" aria-pressed="' + (fav ? 'true' : 'false') + '" aria-label="' + (fav ? 'Remove ' : 'Add ') + escapeHtml(skill.title) + ' ' + (fav ? 'from' : 'to') + ' favorites">' +
+              '<svg class="hb" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>' +
+              '<svg class="ho" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>' +
+            '</button>' +
+            '<div class="card-icon" aria-hidden="true">' + skill.icon + '</div>' +
+            '<h3 class="card-title">' + escapeHtml(skill.title) + '</h3>' +
+            '<p class="card-author text-faint">' + escapeHtml(skill.author) + '</p>' +
+            '<p class="card-desc">' + escapeHtml(skill.summary) + '</p>' +
+            '<div class="card-foot">' +
+              '<span class="pill">' + escapeHtml(categoryLabel(skill.category)) + '</span>' +
+              '<button type="button" class="preview" data-preview="' + escapeHtml(skill.id) + '">Preview →</button>' +
+            '</div>' +
+          '</article>';
+      }
+
+      function getVisible() {
+        var base = state.mode === 'favs'
+          ? SKILLS.filter(function (s) { return isFavorite(s.id); })
+          : SKILLS.slice();
+        var q = state.q.toLowerCase();
+        if (q) {
+          base = base.filter(function (s) {
+            return s.title.toLowerCase().indexOf(q) !== -1 ||
+                   s.summary.toLowerCase().indexOf(q) !== -1 ||
+                   s.author.toLowerCase().indexOf(q) !== -1 ||
+                   categoryLabel(s.category).toLowerCase().indexOf(q) !== -1;
+          });
+        }
+        if (state.category) {
+          base = base.filter(function (s) { return s.category === state.category; });
+        }
+        return base;
+      }
+
+      function render() {
+        var visible = getVisible();
+        var grid = $el('skillsGrid');
+        grid.innerHTML = visible.map(cardHTML).join('');
+
+        $el('favCount').textContent = favorites.length;
+        $el('favBtn').setAttribute('aria-pressed', state.mode === 'favs' ? 'true' : 'false');
+
+        var inFavs = state.mode === 'favs';
+        $el('viewBanner').classList.toggle('hidden', !inFavs);
+        if (inFavs) {
+          $el('viewCount').textContent = visible.length + ' of ' + favorites.length + ' favorited';
+        }
+
+        var empty = $el('emptyState');
+        if (visible.length === 0) {
+          empty.classList.remove('hidden');
+          if (inFavs && favorites.length === 0) {
+            $el('emptyTitle').textContent = 'No favorites yet';
+            $el('emptyMsg').textContent = 'Tap the ♥ on any skill to build your collection.';
+            $el('resetFilters').textContent = 'Browse all skills';
+          } else if (inFavs) {
+            $el('emptyTitle').textContent = 'No matching favorites';
+            $el('emptyMsg').textContent = 'Your search or category filter did not match any favorites.';
+            $el('resetFilters').textContent = 'Browse all skills';
+          } else {
+            $el('emptyTitle').textContent = 'No skills found';
+            $el('emptyMsg').textContent = 'Try a different search or category.';
+            $el('resetFilters').textContent = 'Clear search & filters';
+          }
+        } else {
+          empty.classList.add('hidden');
+        }
+
+        var noun = visible.length === 1 ? 'skill' : 'skills';
+        var scope = inFavs ? ' in favorites' : '';
+        $el('resultStatus').textContent = visible.length + ' ' + noun + ' shown' + scope + '.';
+        $el('footerNote').textContent = SKILLS.length + ' open-source skill' + (SKILLS.length === 1 ? '' : 's') + ' · MIT licensed · 100% static, no tracking';
+      }
+
+      function clearFilters() {
+        state.q = '';
+        state.category = '';
+        $el('searchInput').value = '';
+        $el('categoryFilter').value = '';
+        render();
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Favorites                                                          */
+      /* ------------------------------------------------------------------ */
+      function toggleFavorite(id) {
+        var idx = favorites.indexOf(id);
+        if (idx === -1) { favorites.push(id); }
+        else { favorites.splice(idx, 1); }
+        try { localStorage.setItem('skillFavorites', JSON.stringify(favorites)); } catch (e) {}
+        render();
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Modal                                                              */
+      /* ------------------------------------------------------------------ */
+      var lastFocused = null;
+      var focusablesCache = null;
+
+      function openSkill(id) {
+        var skill = null;
+        for (var i = 0; i < SKILLS.length; i++) {
+          if (SKILLS[i].id === id) { skill = SKILLS[i]; break; }
+        }
+        if (!skill) return;
+        currentSkillId = skill.id;
+        lastFocused = document.activeElement;
+        $el('modalTitle').textContent = skill.title;
+        $el('modalAuthor').textContent = skill.author;
+        $el('modalDesc').textContent = skill.summary;
+        $el('modalIcon').textContent = skill.icon;
+        $el('modalInstall').textContent = skill.install;
+        $el('copyBtn').textContent = 'Copy Install';
+        $el('modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        focusablesCache = $el('modal').querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        $el('modalClose').focus();
+      }
+
+      function closeModal() {
+        $el('modal').classList.add('hidden');
+        if ($el('copyBtn').dataset.flashing) {
+          clearTimeout($el('copyBtn').dataset.flashing);
+          $el('copyBtn').textContent = 'Copy Install';
+        }
+        document.body.style.overflow = '';
+        if (lastFocused && lastFocused.focus) { lastFocused.focus(); }
+        lastFocused = null;
+      }
+
+      function copyText(text) {
+        return new Promise(function (resolve) {
+          function fallback() {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) {}
+            ta.remove();
+            resolve(ok);
+          }
+          if (navigator.clipboard && window.isSecureContext && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { resolve(true); }, fallback);
+          } else {
+            fallback();
+          }
+        });
+      }
+
+      function copyInstall() {
+        var skill = null;
+        for (var i = 0; i < SKILLS.length; i++) {
+          if (SKILLS[i].id === currentSkillId) { skill = SKILLS[i]; break; }
+        }
+        if (!skill) return;
+        copyText(skill.install).then(function (ok) {
+          var btn = $el('copyBtn');
+          btn.textContent = ok ? '✓ Copied!' : 'Copy failed — try again';
+          if (btn.dataset.flashing) clearTimeout(btn.dataset.flashing);
+          btn.dataset.flashing = setTimeout(function () {
+            btn.textContent = 'Copy Install';
+            delete btn.dataset.flashing;
+          }, 1800);
+        });
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Theme                                                              */
+      /* ------------------------------------------------------------------ */
+      function applyTheme(light) {
+        var html = document.documentElement;
+        html.classList.toggle('light', light);
+        html.classList.toggle('dark', !light);
+        try { localStorage.setItem('skillforge-theme', light ? 'light' : 'dark'); } catch (e) {}
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', light ? '#f6f6f7' : '#09090b');
+      }
+
+      /* ------------------------------------------------------------------ */
+      /* Init                                                               */
+      /* ------------------------------------------------------------------ */
+      function initCategories() {
+        var select = $el('categoryFilter');
+        var seen = {};
+        var html = '<option value="">All categories</option>';
+        SKILLS.forEach(function (s) {
+          if (!seen[s.category]) {
+            seen[s.category] = true;
+            html += '<option value="' + escapeHtml(s.category) + '">' + escapeHtml(categoryLabel(s.category)) + '</option>';
+          }
+        });
+        select.innerHTML = html;
+      }
+
+      function init() {
+        initCategories();
+        render();
+
+        $el('searchInput').addEventListener('input', function (e) {
+          state.q = e.target.value;
+          render();
+        });
+        $el('categoryFilter').addEventListener('change', function (e) {
+          state.category = e.target.value;
+          render();
+        });
+        $el('favBtn').addEventListener('click', function () {
+          state.mode = state.mode === 'favs' ? 'all' : 'favs';
+          if (state.mode === 'favs' && favorites.length === 0) { render(); return; }
+          render();
+        });
+        $el('showAllBtn').addEventListener('click', function () {
+          state.mode = 'all';
+          if (state.q || state.category) clearFilters();
+          else render();
+        });
+        $el('resetFilters').addEventListener('click', function () {
+          if (state.mode === 'favs') { state.mode = 'all'; clearFilters(); }
+          else clearFilters();
+        });
+        $el('themeToggle').addEventListener('click', function () {
+          applyTheme(document.documentElement.classList.contains('dark'));
+        });
+        $el('uploadBtn').addEventListener('click', function () {
+          alert('Skill submissions go through GitHub pull requests.\n\n1) Fork PhantomCapAI/grok-skills-marketplace\n2) Add your skill under /skills/<name>/ with skill.md + instructions.md\n3) Register it in the SKILLS list inside index.html\n4) Open a pull request.\n\nSee the README for the exact data format.');
+        });
+        $el('modalClose').addEventListener('click', closeModal);
+        $el('modalClose2').addEventListener('click', closeModal);
+        $el('copyBtn').addEventListener('click', copyInstall);
+        $el('modal').addEventListener('click', function (e) {
+          if (e.target === $el('modal')) closeModal();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !$el('modal').classList.contains('hidden')) {
+            closeModal();
+            return;
+          }
+          if (e.key === 'Tab' && !$el('modal').classList.contains('hidden') && focusablesCache) {
+            var list = Array.prototype.slice.call(focusablesCache).filter(function (n) { return !n.disabled; });
+            if (list.length === 0) return;
+            var first = list[0];
+            var last = list[list.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        });
+
+        $el('skillsGrid').addEventListener('click', function (e) {
+          var favTarget = e.target.closest('[data-fav]');
+          if (favTarget) {
+            toggleFavorite(favTarget.getAttribute('data-fav'));
+            return;
+          }
+          var preview = e.target.closest('[data-preview]');
+          if (preview) {
+            openSkill(preview.getAttribute('data-preview'));
+            return;
+          }
+          var card = e.target.closest('.card');
+          if (card) {
+            openSkill(card.getAttribute('data-id'));
+          }
+        });
+
+        applyTheme(document.documentElement.classList.contains('light'));
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
       } else {
-        favorites.push(id);
+        init();
       }
-      localStorage.setItem('skillFavorites', JSON.stringify(favorites));
-      renderSkills(skills);
-      updateFavCount();
-    }
-
-    function updateFavCount() {
-      document.getElementById('favCount').textContent = favorites.length;
-    }
-
-    function showFavorites() {
-      const favSkills = skills.filter(s => favorites.includes(s.id));
-      if (favSkills.length === 0) {
-        alert("No favorites yet ❤️\nStart adding some!");
-        return;
-      }
-      renderSkills(favSkills);
-    }
-
-    function renderSkills(filteredSkills) {
-      const grid = document.getElementById('skillsGrid');
-      grid.innerHTML = '';
-      filteredSkills.forEach(skill => {
-        const isFav = isFavorite(skill.id);
-        const card = document.createElement('div');
-        card.className = `skill-card bg-zinc-900 border border-zinc-800 rounded-3xl p-8 cursor-pointer relative`;
-        card.innerHTML = `
-          <button onclick="event.stopImmediatePropagation(); toggleFavorite(${skill.id});" class="absolute top-6 right-6 text-2xl ${isFav ? 'text-red-500' : 'text-zinc-600 hover:text-zinc-400'}">
-            <i class="fa-solid fa-heart"></i>
-          </button>
-          <div class="text-6xl mb-6">${skill.icon}</div>
-          <h3 class="text-2xl font-semibold">${skill.title}</h3>
-          <p class="text-zinc-400 text-sm mt-1">${skill.author}</p>
-          <p class="text-zinc-300 mt-6 line-clamp-3">${skill.desc}</p>
-          <div class="mt-8 flex justify-between items-center">
-            <span class="text-xs uppercase tracking-widest bg-zinc-800 px-3 py-1 rounded-full">${skill.category}</span>
-            <button onclick="event.stopImmediatePropagation(); showSkill(${skill.id})" class="text-violet-400 hover:text-violet-300 text-sm font-medium">Preview →</button>
-          </div>
-        `;
-        card.onclick = () => showSkill(skill.id);
-        grid.appendChild(card);
-      });
-    }
-
-    function filterSkills() {
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const category = document.getElementById('categoryFilter').value;
-      const filtered = skills.filter(skill => {
-        const matchesSearch = skill.title.toLowerCase().includes(search) || skill.desc.toLowerCase().includes(search);
-        const matchesCategory = !category || skill.category === category;
-        return matchesSearch && matchesCategory;
-      });
-      renderSkills(filtered);
-    }
-
-    let currentSkillIndex = 0;
-    function showSkill(index) {
-      currentSkillIndex = index;
-      const skill = skills[index];
-      document.getElementById('modalTitle').textContent = skill.title;
-      document.getElementById('modalAuthor').textContent = skill.author;
-      document.getElementById('modalDesc').textContent = skill.desc;
-      document.getElementById('modalIcon').textContent = skill.icon;
-      document.getElementById('modalInstall').textContent = skill.install;
-      document.getElementById('modal').classList.remove('hidden');
-    }
-
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-
-    function copyInstall() {
-      const text = skills[currentSkillIndex].install;
-      navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
-    }
-
-    function showUploadModal() {
-      alert("🚀 Upload flow coming soon!\n\nFor now: Create a folder in ~/.grok/skills/ and submit a PR on GitHub.");
-    }
-
-    function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.classList.contains('dark');
-      const icon = document.getElementById('themeToggle').querySelector('i');
-      if (isDark) {
-        html.classList.remove('dark');
-        icon.classList.replace('fa-sun', 'fa-moon');
-        localStorage.theme = 'light';
-      } else {
-        html.classList.add('dark');
-        icon.classList.replace('fa-moon', 'fa-sun');
-        localStorage.theme = 'dark';
-      }
-    }
-
-    if (localStorage.theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.getElementById('themeToggle').querySelector('i').classList.replace('fa-sun', 'fa-moon');
-    }
-
-    renderSkills(skills);
-    updateFavCount();
+    })();
   </script>
 </body>
 </html>
